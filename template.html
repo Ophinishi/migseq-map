@@ -1,0 +1,295 @@
+<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MIG-seq Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--su:#161b22;--su2:#1f262f;--bo:rgba(255,255,255,.08);--tx:#e6edf3;--mu:#8b949e;--ac:#58a6ff;--co:#3fb950;--cd:#d29922}
+body{font-family:sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--su);border-bottom:1px solid var(--bo);flex-shrink:0;flex-wrap:wrap}
+#title{font-size:12px;color:var(--ac);font-family:monospace;letter-spacing:.05em}
+#title span{color:var(--mu)}
+.sr{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.st{font-size:11px;color:var(--mu)}
+.st b{font-weight:500;color:var(--tx)}
+.so b{color:var(--co)} .sd b{color:var(--cd)}
+.ctrl{display:flex;gap:8px;padding:6px 14px;background:var(--su);border-bottom:1px solid var(--bo);flex-shrink:0;flex-wrap:wrap;align-items:flex-end}
+.cg{display:flex;flex-direction:column;gap:2px}
+.cl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu)}
+select{background:var(--su2);border:1px solid var(--bo);border-radius:5px;color:var(--tx);font-size:12px;padding:4px 8px;outline:none;min-width:200px}
+select:focus{border-color:var(--ac)}
+.tg{display:flex;gap:4px}
+.tb{background:transparent;border:1px solid var(--bo);border-radius:5px;color:var(--mu);font-size:11px;padding:4px 9px;cursor:pointer;transition:.15s}
+.tb.oc{border-color:var(--co);color:var(--co);background:rgba(63,185,80,.1)}
+.tb.dc{border-color:var(--cd);color:var(--cd);background:rgba(210,153,34,.1)}
+.btn{background:transparent;border:1px solid var(--bo);border-radius:5px;color:var(--mu);font-size:12px;padding:5px 11px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--ac);color:var(--ac)}
+.main{display:flex;flex:1;overflow:hidden}
+#map{flex:1}
+.sb{width:280px;background:var(--su);border-left:1px solid var(--bo);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sbh{padding:8px 12px;border-bottom:1px solid var(--bo);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);display:flex;justify-content:space-between;align-items:center}
+.sbc{flex:1;overflow-y:auto;padding:8px}
+.sbc::-webkit-scrollbar{width:3px}
+.sbc::-webkit-scrollbar-thumb{background:var(--bo)}
+.lc{background:var(--su2);border:1px solid var(--bo);border-radius:7px;padding:7px 9px;margin-bottom:5px;cursor:pointer;transition:.15s}
+.lc:hover{border-color:rgba(255,255,255,.2)}
+.lc.act{border-color:var(--ac)}
+.ln{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4}
+.lm{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px}
+.bdg{font-size:10px;padding:1px 6px;border-radius:9px;font-family:monospace;font-weight:700}
+.bg{background:rgba(63,185,80,.15);color:var(--co)}
+.ba{background:rgba(210,153,34,.15);color:var(--cd)}
+.bb{background:rgba(88,166,255,.15);color:var(--ac)}
+.dp{border-top:1px solid var(--bo);padding:10px 12px;max-height:280px;overflow-y:auto;flex-shrink:0}
+.dp::-webkit-scrollbar{width:3px}
+.dp::-webkit-scrollbar-thumb{background:var(--bo)}
+.dln{font-size:12px;font-weight:500;margin-bottom:3px;line-height:1.4}
+.dm{font-size:11px;color:var(--mu);margin-bottom:6px;display:flex;gap:8px;flex-wrap:wrap}
+.dr{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid var(--bo);line-height:1.4}
+.dr:last-child{border:none}
+.dsp{font-style:italic;color:var(--mu);flex:1}
+.dct{display:flex;gap:2px;margin-left:4px}
+.mb{font-size:9px;padding:1px 4px;border-radius:7px;font-family:monospace}
+.leg{display:flex;gap:8px;padding:6px 12px;flex-wrap:wrap;border-top:1px solid var(--bo);flex-shrink:0;align-items:center}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--mu)}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.lr{width:10px;height:10px;border-radius:50%;border:2px solid var(--cd);flex-shrink:0}
+.lx{width:10px;height:10px;border-radius:50%;border:2px solid var(--cd);background:var(--co);flex-shrink:0;opacity:.8}
+.ph{padding:14px;text-align:center;color:var(--mu);font-size:11px;line-height:1.8}
+.leaflet-container{background:#0f1923!important}
+.leaflet-tile{filter:brightness(.72) saturate(.45)}
+
+.tabs{display:flex;background:var(--su);border-bottom:2px solid var(--bo);flex-shrink:0}
+.tab{padding:8px 18px;font-size:12px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;user-select:none}
+.tab:hover{color:var(--tx)}.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.dpanel{flex:1;display:none;flex-direction:column;overflow:hidden}
+.dptop{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--bo);align-items:center;flex-wrap:wrap;flex-shrink:0}
+.dptop label{font-size:11px;color:var(--mu)}
+#sp2{min-width:260px}
+#cwrap{flex:1;overflow-y:auto;padding:16px}
+#cwrap::-webkit-scrollbar{width:4px}
+#cwrap::-webkit-scrollbar-thumb{background:var(--bo)}
+.ctit{font-size:13px;font-weight:500;font-style:italic;margin-bottom:14px;color:var(--tx)}
+.brow{display:flex;align-items:center;margin-bottom:9px;gap:8px}
+.blbl{width:95px;font-size:11px;color:var(--mu);text-align:right;flex-shrink:0}
+.btrk{flex:1;background:var(--su2);border-radius:3px;height:22px;overflow:hidden}
+.bfil{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px}
+.bval{font-size:10px;font-family:monospace;color:rgba(0,0,0,.75);white-space:nowrap}
+.nod{color:var(--mu);font-size:12px;padding:24px;text-align:center;line-height:1.8}
+.chint{font-size:11px;color:var(--mu);padding:10px 0 0;text-align:center}
+</style></head><body>
+<header>
+<div id="title">MIG-seq<span> [更新: /*__UPDATED__*/] / 採集・DNA解析状況マップ</span></div>
+<div class="sr">
+<div class="st"><b id="s1">0</b> 地点</div>
+<div class="st so"><b id="s2">0</b> Oceanshot</div>
+<div class="st sd"><b id="s3">0</b> 未解析DNA</div>
+<div class="st"><b id="s4">0</b> 種</div>
+</div></header>
+<div class="tabs">
+  <div class="tab on" id="t1" onclick="swTab(1)">&#x1F5FA; 採集地図</div>
+  <div class="tab"    id="t2" onclick="swTab(2)">&#x1F4CA; 水深別分布</div>
+</div>
+<div class="ctrl" id="mctrl">
+<div class="cg"><span class="cl">種でフィルター</span>
+<select id="spf"><option value="">— すべての種 —</option></select></div>
+<div class="cg"><span class="cl">データソース</span>
+<div class="tg">
+<button class="tb oc" id="bo" onclick="tog('o')">● Oceanshot</button>
+<button class="tb dc" id="bd" onclick="tog('d')">○ 未解析DNA</button>
+</div></div>
+<button class="btn" onclick="resetAll()">リセット</button>
+</div>
+<div class="main"><div id="map"></div>
+<div class="sb">
+<div class="sbh"><span>採集地点一覧</span><span id="lcount" style="color:var(--tx);font-size:12px">—</span></div>
+<div class="sbc" id="ll"></div>
+<div class="dp" id="dp"><div class="ph">地点をクリックすると<br>詳細が表示されます</div></div>
+<div class="leg">
+<div class="li"><div class="ld" style="background:var(--co)"></div>Oceanshotのみ</div>
+<div class="li"><div class="lr"></div>未解析DNAのみ</div>
+<div class="li"><div class="lx"></div>両方あり</div>
+</div></div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var LOCS=/*__LOCS__*/;
+var SP=/*__SP__*/;
+
+var showO=true,showD=true,curSp="",map,marks=[];
+
+window.addEventListener("load",function(){
+  map=L.map("map",{center:[36,138],zoom:5});
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
+    attribution:"&copy; OpenStreetMap &copy; CARTO",maxZoom:14
+  }).addTo(map);
+  var sel=document.getElementById("spf");
+  for(var i=0;i<SP.length;i++){
+    var op=document.createElement("option");
+    op.value=SP[i];op.textContent=SP[i];sel.appendChild(op);
+  }
+  sel.onchange=function(){curSp=this.value;go();};
+  var s2=document.getElementById("sp2");
+  for(var i=0;i<SP.length;i++){var ob=document.createElement("option");ob.value=SP[i];ob.textContent=SP[i];s2.appendChild(ob);}
+  s2.onchange=function(){drawChart(this.value);};
+  document.getElementById("dp2").style.display="none";
+  go();
+});
+
+function visOc(l){if(!showO)return 0;return curSp?(l.o[curSp]||0):l.oc;}
+function visDc(l){if(!showD)return 0;return curSp?(l.d[curSp]||0):l.dc;}
+
+function go(){
+  marks.forEach(function(m){map.removeLayer(m);});marks=[];
+  var vis=[],tOc=0,tDc=0,spSet={};
+  for(var i=0;i<LOCS.length;i++){
+    var l=LOCS[i],oc=visOc(l),dc=visDc(l);
+    if(oc===0&&dc===0)continue;
+    tOc+=oc;tDc+=dc;
+    var keys=Object.keys(l.o).concat(Object.keys(l.d));
+    for(var k=0;k<keys.length;k++)spSet[keys[k]]=1;
+    vis.push({l:l,oc:oc,dc:dc});
+    (function(v){
+      var r=Math.max(8,Math.min(32,7+Math.sqrt(v.oc+v.dc)*2.4));
+      var sty;
+      if(v.oc>0&&v.dc===0)sty={radius:r,fillColor:"#3fb950",color:"rgba(0,0,0,.3)",weight:1.5,fillOpacity:.85};
+      else if(v.dc>0&&v.oc===0)sty={radius:r,fillColor:"transparent",color:"#d29922",weight:2.5,fillOpacity:0};
+      else sty={radius:r,fillColor:"#3fb950",color:"#d29922",weight:3,fillOpacity:.7};
+      var mk=L.circleMarker([v.l.lat,v.l.lon],sty).addTo(map);
+      mk.on("click",function(){det(v.l,v.oc,v.dc);hl(v.l.loc);});
+      marks.push(mk);
+    })(vis[vis.length-1]);
+  }
+  sidebar(vis);
+  if(!curSp)document.getElementById("s4").textContent=Object.keys(spSet).length;
+  else document.getElementById("s4").textContent=spSet[curSp]?1:0;
+  document.getElementById("s1").textContent=vis.length;
+  document.getElementById("s2").textContent=tOc;
+  document.getElementById("s3").textContent=tDc;
+}
+
+function sidebar(vis){
+  document.getElementById("lcount").textContent=vis.length+" 地点";
+  var h="";
+  for(var i=0;i<vis.length;i++){
+    var v=vis[i],l=v.l;
+    var nm=l.lj||l.loc;
+    var sh=nm.length>43?nm.substring(0,40)+"...":nm;
+    var ob=v.oc?'<span class="bdg bg">OS '+v.oc+"</span>":"";
+    var db=v.dc?'<span class="bdg ba">DNA '+v.dc+"</span>":"";
+    var sb='<span class="bdg bb">'+(curSp?1:l.sc)+" 種</span>";
+    h+='<div class="lc" data-i="'+i+'" onclick="fl('+i+')">'
+      +'<div class="ln">'+sh+"</div>"
+      +'<div class="lm">'+ob+db+sb+"</div></div>";
+  }
+  document.getElementById("ll").innerHTML=h;
+}
+
+var _vis=[];
+function fl(idx){
+  var cards=document.querySelectorAll(".lc");
+  for(var i=0;i<cards.length;i++){
+    if(parseInt(cards[i].dataset.i)===idx){
+      var v=_vis[idx]||null;
+      if(!v){
+        var cnt=0;
+        for(var j=0;j<LOCS.length;j++){
+          var oc=visOc(LOCS[j]),dc=visDc(LOCS[j]);
+          if(oc===0&&dc===0)continue;
+          if(cnt===idx){v={l:LOCS[j],oc:oc,dc:dc};break;}
+          cnt++;
+        }
+      }
+      if(v){map.setView([v.l.lat,v.l.lon],10);det(v.l,v.oc,v.dc);hl(v.l.loc);}
+      break;
+    }
+  }
+}
+
+function hl(locName){
+  document.querySelectorAll(".lc").forEach(function(c){
+    c.classList.toggle("act",c.querySelector(".ln").textContent.trim()===
+      (LOCS.find(function(x){return x.loc===locName;})||{lj:"",loc:locName}).lj.substring(0,40)||locName.substring(0,40));
+  });
+}
+
+function det(loc,oc,dc){
+  var allSp={};
+  Object.keys(loc.o).forEach(function(s){allSp[s]={o:loc.o[s],d:0};});
+  Object.keys(loc.d).forEach(function(s){allSp[s]=allSp[s]||{o:0,d:0};allSp[s].d=loc.d[s];});
+  var arr=Object.keys(allSp).sort(function(a,b){return(allSp[b].o+allSp[b].d)-(allSp[a].o+allSp[a].d);});
+  var rows="";
+  for(var i=0;i<Math.min(arr.length,30);i++){
+    var s=arr[i],c=allSp[s];
+    if(curSp&&s!==curSp)continue;
+    var ob=(showO&&c.o)?'<span class="mb bg">'+c.o+"</span>":"";
+    var db=(showD&&c.d)?'<span class="mb ba">'+c.d+"</span>":"";
+    rows+='<div class="dr"><span class="dsp">'+s+'</span><span class="dct">'+ob+db+"</span></div>";
+  }
+  var title=loc.lj?loc.lj+'<br><span style="font-size:10px;color:var(--mu)">'+loc.loc+"</span>":loc.loc;
+  document.getElementById("dp").innerHTML=
+    '<div class="dln">'+title+"</div>"
+    +'<div class="dm"><span style="color:var(--co)">Oceanshot: '+oc+"</span>"
+    +'<span style="color:var(--cd)">未解析DNA: '+dc+"</span>"
+    +"<span>"+loc.sc+" 種</span></div>"+rows;
+}
+
+function tog(t){
+  if(t==="o"){showO=!showO;document.getElementById("bo").className="tb"+(showO?" oc":"");}
+  else{showD=!showD;document.getElementById("bd").className="tb"+(showD?" dc":"");}
+  go();
+}
+
+function resetAll(){
+  curSp="";showO=true;showD=true;
+  document.getElementById("spf").value="";
+  document.getElementById("bo").className="tb oc";
+  document.getElementById("bd").className="tb dc";
+  go();map.setView([36,138],5);
+  document.getElementById("dp").innerHTML='<div class="ph">地点をクリックすると<br>詳細が表示されます</div>';
+}
+window.tog=tog;window.fl=fl;window.resetAll=resetAll;
+
+</script>
+<div class="dpanel" id="dp2">
+  <div class="dptop">
+    <label>種を選択：</label>
+    <select id="sp2"><option value="">— 種を選んでください —</option></select>
+  </div>
+  <div id="cwrap"><div class="nod">種を選ぶと水深帯ごとのサンプル数が表示されます</div></div>
+</div><script>
+var BINS=/*__BINS__*/;
+var SPD=/*__SPD__*/;
+var BCOL=["#2dc7b7","#3fb950","#58a6ff","#d29922","#e07b39","#e05050","#9370db"];
+function swTab(n){
+  document.getElementById("t1").className="tab"+(n===1?" on":"");
+  document.getElementById("t2").className="tab"+(n===2?" on":"");
+  var mp=document.querySelector(".main");
+  var ctrl=document.getElementById("mctrl");
+  var dp2=document.getElementById("dp2");
+  if(mp)mp.style.display=n===1?"flex":"none";
+  if(ctrl)ctrl.style.display=n===1?"flex":"none";
+  dp2.style.display=n===2?"flex":"none";
+  if(n===2)drawChart(document.getElementById("sp2").value);
+}
+function drawChart(sp){
+  var w=document.getElementById("cwrap");
+  if(!sp){w.innerHTML='<div class="nod">種を選んでください</div>';return;}
+  var v=SPD[sp];
+  if(!v){w.innerHTML='<div class="nod">この種の水深データはありません</div>';return;}
+  var tot=v.reduce(function(a,b){return a+b;},0);
+  var mx=Math.max.apply(null,v)||1;
+  var h='<div class="ctit">'+sp+'</div>';
+  for(var i=0;i<BINS.length;i++){
+    var n=v[i],p=Math.round(n/mx*100);
+    h+='<div class="brow"><div class="blbl">'+BINS[i]+'</div>'
+      +'<div class="btrk"><div class="bfil" style="width:'+p+'%;background:'+BCOL[i]+'">'
+      +(n>0?'<span class="bval">'+n+' 件</span>':"")
+      +"</div></div></div>";
+  }
+  h+='<div class="chint">合計 '+tot+' 件の水深記録</div>';
+  w.innerHTML=h;
+}
+window.swTab=swTab;
+</script>
+</body></html>
