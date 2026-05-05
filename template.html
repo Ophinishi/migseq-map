@@ -57,8 +57,8 @@ select:focus{border-color:var(--ac)}
 .lr{width:10px;height:10px;border-radius:50%;border:2px solid var(--cd);flex-shrink:0}
 .lx{width:10px;height:10px;border-radius:50%;border:2px solid var(--cd);background:var(--co);flex-shrink:0;opacity:.8}
 .ph{padding:14px;text-align:center;color:var(--mu);font-size:11px;line-height:1.8}
-.leaflet-container{background:#0f1923!important}
-.leaflet-tile{filter:brightness(.72) saturate(.45)}
+.leaflet-container{background:#7a9bb5!important}
+.leaflet-tile{filter:saturate(.7) brightness(.9)}
 
 .tabs{display:flex;background:var(--su);border-bottom:2px solid var(--bo);flex-shrink:0}
 .tab{padding:8px 18px;font-size:12px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;user-select:none}
@@ -73,9 +73,10 @@ select:focus{border-color:var(--ac)}
 .ctit{font-size:13px;font-weight:500;font-style:italic;margin-bottom:14px;color:var(--tx)}
 .brow{display:flex;align-items:center;margin-bottom:9px;gap:8px}
 .blbl{width:95px;font-size:11px;color:var(--mu);text-align:right;flex-shrink:0}
-.btrk{flex:1;background:var(--su2);border-radius:3px;height:22px;overflow:hidden}
+.btrk{flex:1;background:var(--su2);border-radius:3px;height:22px;overflow:hidden;position:relative}
 .bfil{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px}
 .bval{font-size:10px;font-family:monospace;color:rgba(0,0,0,.75);white-space:nowrap}
+.bval2{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;font-family:monospace;color:var(--tx);white-space:nowrap;font-weight:500}
 .nod{color:var(--mu);font-size:12px;padding:24px;text-align:center;line-height:1.8}
 .chint{font-size:11px;color:var(--mu);padding:10px 0 0;text-align:center}
 </style></head><body>
@@ -120,7 +121,7 @@ var showO=true,showD=true,curSp="",map,marks=[];
 
 window.addEventListener("load",function(){
   map=L.map("map",{center:[36,138],zoom:5});
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{
     attribution:"&copy; OpenStreetMap &copy; CARTO",maxZoom:14
   }).addTo(map);
   var sel=document.getElementById("spf");
@@ -260,7 +261,7 @@ window.tog=tog;window.fl=fl;window.resetAll=resetAll;
 </div><script>
 var BINS=/*__BINS__*/;
 var SPD=/*__SPD__*/;
-var BCOL=["#2dc7b7","#3fb950","#58a6ff","#d29922","#e07b39","#e05050","#9370db"];
+var BCOL=["#2dc7b7","#3fb950","#7dc63f","#a8c93c","#d6c83a","#e0a838","#e08838","#e06838","#e04838","#d63845","#c73864","#b03888","#9038a8","#6840c0","#4060d0","#3080d0","#20a0c8"];
 function swTab(n){
   document.getElementById("t1").className="tab"+(n===1?" on":"");
   document.getElementById("t2").className="tab"+(n===2?" on":"");
@@ -281,11 +282,13 @@ function drawChart(sp){
   var mx=Math.max.apply(null,v)||1;
   var h='<div class="ctit">'+sp+'</div>';
   for(var i=0;i<BINS.length;i++){
-    var n=v[i],p=Math.round(n/mx*100);
+    var n=v[i];
+    var p=n>0?Math.max(8,Math.round(n/mx*100)):3;
+    var op=n>0?1:0.25;
     h+='<div class="brow"><div class="blbl">'+BINS[i]+'</div>'
-      +'<div class="btrk"><div class="bfil" style="width:'+p+'%;background:'+BCOL[i]+'">'
-      +(n>0?'<span class="bval">'+n+' 件</span>':"")
-      +"</div></div></div>";
+      +'<div class="btrk"><div class="bfil" style="width:'+p+'%;background:'+BCOL[i]+';opacity:'+op+'"></div>'
+      +'<span class="bval2">'+(n>0?n+' 件':'-')+'</span>'
+      +"</div></div>";
   }
   h+='<div class="chint">合計 '+tot+' 件の水深記録</div>';
   w.innerHTML=h;
