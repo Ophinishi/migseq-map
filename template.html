@@ -119,9 +119,14 @@ var SP=/*__SP__*/;
 
 var showO=true,showD=true,curSp="",map,marks=[];
 
+// CARTO now requires a free API key for basemap tiles.
+// Get one instantly (no account needed) at https://carto.com/basemaps/apikey/
+// then paste it below. Until you do, the map will show "API KEY REQUIRED" tiles.
+var CARTO_API_KEY = "cb1_2a7g_1_d24bc0b65917f8aa5fb9a81c";
+
 window.addEventListener("load",function(){
   map=L.map("map",{center:[36,138],zoom:5});
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=" + CARTO_API_KEY,{
     attribution:"&copy; OpenStreetMap &copy; CARTO",maxZoom:14
   }).addTo(map);
   var sel=document.getElementById("spf");
